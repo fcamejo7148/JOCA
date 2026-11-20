@@ -1,4 +1,199 @@
+<!DO
 <!DOCTYPE html>
+<html lang="es-UY">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport"
+content="width=device-width, initial-scale=1">
+<title>JOCA 3.0</title>
+
+<style>
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: #030914;
+  color: white;
+  font-family: Arial, sans-serif;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.menu {
+  position: relative;
+  width: min(100vw, 177.5vh);
+  aspect-ratio: 1647 / 928;
+  background: #030914;
+  overflow: hidden;
+}
+
+.fondo {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.logo {
+  position: absolute;
+  top: 9%;
+  left: 20%;
+  width: 60%;
+  height: 35%;
+  object-fit: contain;
+  background: #020813;
+}
+
+.acceso {
+  position: absolute;
+  top: 46%;
+  height: 34%;
+  width: 20%;
+  border-radius: 20px;
+  text-decoration: none;
+  transition: background .2s;
+}
+
+.acceso:hover,
+.acceso:focus-visible {
+  background: #00c8ff20;
+  box-shadow: 0 0 25px #00bfff;
+  outline: 2px solid #00c8ff;
+}
+
+.radio { left: 5.6%; }
+.streaming { left: 29.3%; }
+.ia { left: 52.2%; }
+.web { left: 74.9%; }
+
+.estado {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 34%;
+  height: 8%;
+  background: #030914;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 3%;
+  gap: 5%;
+  font-size: clamp(12px, 1.6vw, 26px);
+}
+
+.inferior {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 13%;
+  background: #030914;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 4%;
+  border-top: 1px solid #247fa8;
+}
+
+button {
+  background: #102740;
+  color: #bceaff;
+  border: 1px solid #267ca5;
+  border-radius: 12px;
+  padding: 10px 20px;
+  font-size: clamp(12px, 1.4vw, 22px);
+  cursor: pointer;
+}
+
+</style>
+</head>
+
+<body>
+
+<main class="menu">
+
+  <img class="fondo"
+    src="menu-joca.png"
+    alt="Menú multimedia JOCA">
+
+  <img class="logo"
+    src="logo-joca.png"
+    alt="JOCA">
+
+  <div class="estado">
+    <span id="conexion"></span>
+    <span id="hora"></span>
+  </div>
+
+  <a class="acceso radio"
+    href="radio.html"
+    aria-label="Radio"></a>
+
+  <a class="acceso streaming"
+    href="streaming.html"
+    aria-label="Streaming"></a>
+
+  <a class="acceso ia"
+    href="voz.html"
+    aria-label="Asistente IA"></a>
+
+  <a class="acceso web"
+    href="https://www.google.com/"
+    aria-label="Navegador"></a>
+
+  <div class="inferior">
+
+    <button onclick="location.reload()">
+      ⌂ Inicio
+    </button>
+
+    <button onclick="pantallaCompleta()">
+      ⛶ Pantalla completa
+    </button>
+
+  </div>
+
+</main>
+
+<script>
+
+function actualizar() {
+
+  document.getElementById("hora").textContent =
+    new Date().toLocaleTimeString("es-UY", {
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+
+  document.getElementById("conexion").textContent =
+    navigator.onLine ? "● Online" : "Sin conexión";
+
+}
+
+actualizar();
+setInterval(actualizar, 1000);
+
+async function pantallaCompleta() {
+
+  try {
+    if (document.fullscreenElement) {
+      await document.exitFullscreen();
+    } else {
+      await document.documentElement
+        .requestFullscreen();
+    }
+  } catch {
+    alert("Pantalla completa no disponible");
+  }
+
+}
+
+</script>
+
+</body>
+</html>
+CTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
