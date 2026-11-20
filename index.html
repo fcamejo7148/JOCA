@@ -1,1 +1,477 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#050d19">
+<title>JOCA</title>
 
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;
+ background:radial-gradient(ellipse at top,#153c65,#050d19 65%);
+ color:white;
+ font-family:Arial,sans-serif;
+ min-height:100vh;
+}
+header{
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ padding:20px 4%;
+}
+.logo{
+ font-size:48px;
+ font-weight:900;
+ letter-spacing:8px;
+ background:linear-gradient(120deg,#fff,#43baff,#195393);
+ -webkit-background-clip:text;
+ -webkit-text-fill-color:transparent;
+}
+#clock{font-size:24px}
+button,a{
+ color:white;
+ cursor:pointer;
+ font:inherit;
+}
+button{
+ border:1px solid #328ac7;
+ border-radius:18px;
+ background:linear-gradient(145deg,#193f68,#08172c);
+ padding:16px;
+}
+button:active{transform:scale(.96)}
+.grid{
+ display:grid;
+ grid-template-columns:repeat(4,1fr);
+ gap:18px;
+ padding:20px 4%;
+}
+.tile{
+ min-height:190px;
+ font-size:clamp(45px,8vw,100px);
+ border-radius:24px;
+ box-shadow:0 8px 24px #0008,inset 0 0 24px #247dd044;
+}
+.page{display:none;padding:20px 4%}
+.active{display:block}
+.services{
+ display:grid;
+ grid-template-columns:repeat(3,1fr);
+ gap:15px;
+ margin-top:20px;
+}
+.services a{
+ text-decoration:none;
+ text-align:center;
+ border-radius:18px;
+ padding:30px 8px;
+ font-size:22px;
+ font-weight:bold;
+}
+.player{
+ margin:20px 4%;
+ padding:20px;
+ border-radius:24px;
+ background:linear-gradient(120deg,#163e68,#08182d);
+ border:1px solid #2466a3;
+ text-align:center;
+}
+.controls{
+ display:flex;
+ justify-content:center;
+ align-items:center;
+ gap:16px;
+ flex-wrap:wrap;
+ margin-top:14px;
+}
+input{
+ padding:15px;
+ border-radius:12px;
+ border:1px solid #328ac7;
+ background:#0b1b30;
+ color:white;
+ font-size:18px;
+ max-width:100%;
+}
+#stations{
+ display:grid;
+ grid-template-columns:repeat(3,1fr);
+ gap:10px;
+ margin-top:20px;
+}
+.orb{
+ font-size:100px;
+ text-align:center;
+ padding:20px;
+}
+.center{text-align:center}
+.muted{color:#9db6d1}
+@media(max-width:650px){
+ .grid{grid-template-columns:repeat(2,1fr)}
+ .tile{min-height:120px}
+ .services,#stations{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+</head>
+
+<body>
+
+<header>
+ <div class="logo" onclick="show('home')">JOCA</div>
+ <div id="clock"></div>
+ <button onclick="fullscreen()" aria-label="Pantalla completa">⛶</button>
+</header>
+
+<div id="home" class="page active">
+ <div class="grid">
+  <button class="tile" onclick="show('radio');loadRadio()" aria-label="Radio">📻</button>
+  <button class="tile" onclick="show('streaming')" aria-label="Streaming">🎬</button>
+  <button class="tile" onclick="show('voice')" aria-label="Asistente de voz">🤖</button>
+  <button class="tile" onclick="show('web')" aria-label="Navegador">🌐</button>
+ </div>
+</div>
+
+<div id="streaming" class="page">
+ <button onclick="show('home')">⌂ Inicio</button>
+ <div class="services">
+  <a style="background:#171717;color:#e50914"
+  href="https://www.netflix.com/"
+  onclick="return parked()">NETFLIX</a>
+
+  <a style="background:#122d65"
+  href="https://www.disneyplus.com/"
+  onclick="return parked()">Disney+</a>
+
+  <a style="background:#07547a"
+  href="https://www.primevideo.com/"
+  onclick="return parked()">prime video</a>
+
+  <a style="background:#ac0000"
+  href="https://www.youtube.com/"
+  onclick="return parked()">YouTube</a>
+
+  <a style="background:#22234a"
+  href="https://www.hbomax.com/"
+  onclick="return parked()">HBO Max</a>
+
+  <a style="background:#292929;color:#e5ad35"
+  href="https://www.plex.tv/"
+  onclick="return parked()">plex</a>
+
+  <a style="background:#145b35"
+  href="https://open.spotify.com/">Spotify</a>
+
+  <a style="background:#191919"
+  href="https://tv.apple.com/"
+  onclick="return parked()">Apple TV</a>
+
+  <a style="background:#5930a5"
+  href="https://www.twitch.tv/"
+  onclick="return parked()">Twitch</a>
+ </div>
+</div>
+
+<div id="radio" class="page">
+ <button onclick="show('home')">⌂ Inicio</button>
+ <h2>Radio</h2>
+
+ <input id="search" placeholder="Buscar emisora">
+ <button onclick="loadRadio()">Buscar</button>
+ <button onclick="showFavorites()">♥</button>
+
+ <p id="radioStatus" class="muted"></p>
+ <div id="stations"></div>
+</div>
+
+<div id="voice" class="page center">
+ <button onclick="show('home')">⌂ Inicio</button>
+ <div class="orb">🤖</div>
+ <h2>Hola, soy JOCA</h2>
+ <button onclick="listen()">🎙 Hablar</button>
+ <p id="answer">¿En qué puedo ayudarte?</p>
+</div>
+
+<div id="web" class="page center">
+ <button onclick="show('home')">⌂ Inicio</button>
+ <h2>Navegador</h2>
+ <input id="address" placeholder="Buscar o ingresar URL">
+ <button onclick="navigate()">Ir</button>
+</div>
+
+<div class="player">
+ <h3 id="stationName">JOCA Radio</h3>
+ <div id="playStatus" class="muted">Sin reproducción</div>
+
+ <div class="controls">
+  <button onclick="previous()">⏮</button>
+  <button onclick="toggleAudio()">▶ / ⏸</button>
+  <button onclick="next()">⏭</button>
+  <button onclick="favorite()">♥</button>
+  <input type="range" min="0" max="1"
+   step="0.05" value="0.7"
+   aria-label="Volumen"
+   oninput="audio.volume=Number(this.value)">
+ </div>
+</div>
+
+<audio id="audio" preload="none"></audio>
+
+<script>
+const audio=document.getElementById('audio');
+audio.volume=0.7;
+
+let stations=[];
+let current=-1;
+let selected=null;
+let favorites=[];
+
+try{
+ favorites=JSON.parse(localStorage.getItem('jocaFavorites')||'[]');
+}catch(e){favorites=[]}
+
+if(!Array.isArray(favorites)) favorites=[];
+
+function show(id){
+ document.querySelectorAll('.page').forEach(p=>{
+  p.classList.remove('active');
+ });
+ document.getElementById(id).classList.add('active');
+}
+
+function updateClock(){
+ document.getElementById('clock').textContent=
+ new Date().toLocaleTimeString('es-UY',{
+  hour:'2-digit',minute:'2-digit'
+ });
+}
+setInterval(updateClock,1000);
+updateClock();
+
+function fullscreen(){
+ if(document.fullscreenElement){
+  document.exitFullscreen();
+ }else if(document.documentElement.requestFullscreen){
+  document.documentElement.requestFullscreen().catch(()=>{
+   alert('Pantalla completa no disponible');
+  });
+ }else{
+  alert('Pantalla completa no disponible');
+ }
+}
+
+function parked(){
+ return confirm('Confirmá que el vehículo está estacionado en un lugar seguro.');
+}
+
+async function loadRadio(){
+ const status=document.getElementById('radioStatus');
+ const search=document.getElementById('search').value.trim();
+ status.textContent='Buscando emisoras...';
+
+ const hosts=[
+  'https://de1.api.radio-browser.info',
+  'https://nl1.api.radio-browser.info'
+ ];
+
+ for(const host of hosts){
+  try{
+   const params=new URLSearchParams({
+    hidebroken:'true',
+    order:'votes',
+    reverse:'true',
+    limit:'60'
+   });
+
+   if(search) params.set('name',search);
+   else params.set('countrycode','UY');
+
+   const response=await fetch(
+    host+'/json/stations/search?'+params
+   );
+
+   if(!response.ok) throw Error('Radio API');
+
+   const data=await response.json();
+
+   stations=data.filter(s=>
+    /^https:\/\//i.test(s.url_resolved||'')
+   );
+
+   current=selected?stations.findIndex(s=>
+    s.stationuuid===selected.stationuuid
+   ):-1;
+
+   renderStations();
+   status.textContent=stations.length+' emisoras';
+   return;
+  }catch(e){}
+ }
+
+ status.textContent='No se pudo conectar con el directorio de radios.';
+}
+
+function renderStations(){
+ const container=document.getElementById('stations');
+ container.replaceChildren();
+
+ stations.forEach((s,i)=>{
+  const b=document.createElement('button');
+  b.textContent=s.name;
+  b.onclick=()=>playStation(i);
+  container.appendChild(b);
+ });
+}
+
+function playStation(i){
+ if(!stations[i])return;
+ current=i;
+ selected=stations[i];
+ audio.src=selected.url_resolved;
+ document.getElementById('stationName').textContent=selected.name;
+ audio.play().catch(()=>{
+  document.getElementById('playStatus').textContent=
+   'No se pudo reproducir. Probá otra emisora.';
+ });
+}
+
+function toggleAudio(){
+ if(!selected){
+  show('radio');
+  loadRadio();
+  return;
+ }
+ if(audio.paused){
+  audio.play().catch(()=>{
+   document.getElementById('playStatus').textContent=
+    'Audio no disponible';
+  });
+ }else audio.pause();
+}
+
+audio.onplaying=()=>{
+ document.getElementById('playStatus').textContent='En reproducción';
+};
+audio.onpause=()=>{
+ document.getElementById('playStatus').textContent='Pausado';
+};
+audio.onerror=()=>{
+ document.getElementById('playStatus').textContent='Emisora no disponible';
+};
+
+function next(){
+ if(stations.length)playStation((current+1)%stations.length);
+}
+
+function previous(){
+ if(stations.length)
+ playStation((current-1+stations.length)%stations.length);
+}
+
+function favorite(){
+ if(!selected)return;
+ if(!favorites.some(s=>s.stationuuid===selected.stationuuid)){
+  favorites.push(selected);
+  try{
+   localStorage.setItem('jocaFavorites',JSON.stringify(favorites));
+  }catch(e){}
+ }
+ document.getElementById('playStatus').textContent='Guardada en favoritos';
+}
+
+function showFavorites(){
+ stations=favorites.slice();
+ current=selected?stations.findIndex(s=>
+  s.stationuuid===selected.stationuuid
+ ):-1;
+ renderStations();
+ document.getElementById('radioStatus').textContent='Mis favoritos';
+}
+
+function speak(text){
+ document.getElementById('answer').textContent=text;
+ if('speechSynthesis' in window){
+  speechSynthesis.cancel();
+  const voice=new SpeechSynthesisUtterance(text);
+  voice.lang='es-UY';
+  speechSynthesis.speak(voice);
+ }
+}
+
+function listen(){
+ const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+
+ if(!SR){
+  speak('El navegador no admite reconocimiento de voz');
+  return;
+ }
+
+ const recognition=new SR();
+ recognition.lang='es-UY';
+
+ recognition.onstart=()=>{
+  document.getElementById('answer').textContent='Te escucho...';
+ };
+ recognition.onresult=e=>{
+  command(e.results[0][0].transcript);
+ };
+ recognition.onerror=()=>{
+  document.getElementById('answer').textContent=
+   'Revisá los permisos del micrófono';
+ };
+
+ try{recognition.start()}
+ catch(e){speak('No pude activar el micrófono')}
+}
+
+function command(text){
+ const t=text.toLowerCase();
+
+ if(t.includes('siguiente')){
+  next();
+ }else if(t.includes('anterior')){
+  previous();
+ }else if(t.includes('pausa')||t.includes('silencio')){
+  audio.pause();
+  if('speechSynthesis' in window)speechSynthesis.cancel();
+ }else if(t.includes('subí')||t.includes('subir')){
+  audio.volume=Math.min(1,audio.volume+0.1);
+ }else if(t.includes('bajá')||t.includes('bajar')){
+  audio.volume=Math.max(0,audio.volume-0.1);
+ }else if(t.includes('favorito')){
+  favorite();
+ }else if(t.includes('radio')){
+  show('radio');
+  loadRadio();
+  speak('Abriendo radio');
+ }else if(t.includes('inicio')){
+  show('home');
+ }else if(t.includes('hola')){
+  speak('Hola, soy JOCA. ¿Cómo estás?');
+ }else{
+  speak('Todavía no conozco ese comando');
+ }
+}
+
+function navigate(){
+ if(!parked())return;
+
+ const value=document.getElementById('address').value.trim();
+ if(!value)return;
+
+ let url='https://www.google.com/search?q='+encodeURIComponent(value);
+
+ try{
+  const parsed=new URL(value);
+  if(parsed.protocol==='https:'||parsed.protocol==='http:'){
+   url=parsed.href;
+  }
+ }catch(e){}
+
+ location.href=url;
+}
+</script>
+
+</body>
+</html>
