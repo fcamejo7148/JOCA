@@ -1,0 +1,301 @@
+
+<!DOCTYPE html>
+<html lang="es-UY">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport"
+content="width=device-width, initial-scale=1">
+<title>JOCA AI 2.0</title>
+<style>
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: #061020;
+  color: white;
+  font-family: Arial, sans-serif;
+  text-align: center;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+}
+main {
+  width: min(90%, 480px);
+  padding: 24px;
+}
+h1 {
+  color: #64d9ff;
+  font-size: 48px;
+  letter-spacing: 8px;
+}
+.orb {
+  width: 155px;
+  height: 155px;
+  border-radius: 50%;
+  margin: 30px auto;
+  background: radial-gradient(
+    circle at 35% 30%,
+    #caffff, #009dff, #09234c
+  );
+  box-shadow: 0 0 40px #008cff80;
+}
+.active {
+  animation: pulse 1.8s infinite;
+}
+@keyframes pulse {
+  50% {
+    transform: scale(1.08);
+    box-shadow: 0 0 65px #00cfff;
+  }
+}
+input, button {
+  padding: 16px;
+  width: 100%;
+  margin: 7px 0;
+  border-radius: 14px;
+  font-size: 17px;
+}
+input {
+  background: #142238;
+  color: white;
+  border: 1px solid #315678;
+}
+button {
+  border: none;
+  background: #087fce;
+  color: white;
+  cursor: pointer;
+}
+button:disabled { opacity: .5; }
+.stop { background: #354258; }
+#status {
+  color: #7ddaff;
+  overflow-wrap: anywhere;
+}
+a { color: #78cfff; }
+</style>
+</head>
+<body>
+<main>
+  <h1>JOCA</h1>
+  <p>INTELIGENCIA ARTIFICIAL</p>
+  <div class="orb" id="orb"></div>
+  <h2 id="status">Desconectada</h2>
+
+  <input id="token" type="password"
+    placeholder="Contraseña privada JOCA"
+    autocomplete="off">
+
+  <button id="start" onclick="connect()">
+    🎙 Conectar JOCA
+  </button>
+
+  <button class="stop"
+    onclick="disconnect()">
+    Desconectar
+  </button>
+
+  <p>Español uruguayo · Voz Marin</p>
+  <a href="./">Volver al inicio</a>
+  <audio id="audio" autoplay></audio>
+</main>
+
+<script>
+const server =
+"https://joca-ai.fcamejo-m.workers.dev";
+
+let pc, stream, dc, controller;
+let timer, generation = 0;
+
+const $ = id => document.getElementById(id);
+
+function status(text) {
+  $("status").textContent = text;
+}
+
+function disconnect() {
+  generation++;
+  clearTimeout(timer);
+  if (controller) controller.abort();
+  if (dc) dc.close();
+  if (pc) pc.close();
+  if (stream) {
+    stream.getTracks().forEach(t => t.stop());
+  }
+  dc = pc = stream = null;
+  $("audio").srcObject = null;
+  $("orb").classList.remove("active");
+  $("start").disabled = false;
+  status("Desconectada");
+}
+
+async function connect() {
+  const token = $("token").value.trim();
+
+  if (!token) {
+    status("Ingresá tu contraseña JOCA");
+    return;
+  }
+
+  const run = ++generation;
+  $("start").disabled = true;
+  controller = new AbortController();
+
+  timer = setTimeout(() => {
+    if (run === generation) {
+      disconnect();
+      status("Tiempo de conexión agotado");
+    }
+  }, 30000);
+
+  try {
+    status("Solicitando micrófono...");
+
+    if (!navigator.mediaDevices?.getUserMedia ||
+        !window.RTCPeerConnection) {
+      throw new Error(
+        "Navegador sin soporte de audio WebRTC"
+      );
+    }
+
+    const mic =
+      await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true
+        }
+      });
+
+    if (run !== generation) {
+      mic.getTracks().forEach(t => t.stop());
+      return;
+    }
+
+    stream = mic;
+    status("Conectando con JOCA AI...");
+
+    const res = await fetch(server + "/session", {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer " + token
+      },
+      signal: controller.signal
+    });
+
+    const data = await res.json();
+
+    if (!res.ok || !data.value) {
+      throw new Error(
+        (data.error || "Error de servidor") +
+        " (" + (data.status || res.status) + ")"
+      );
+    }
+
+    if (run !== generation) return;
+
+    $("token").value = "";
+
+    pc = new RTCPeerConnection();
+
+    pc.ontrack = event => {
+      $("audio").srcObject = event.streams[0];
+      $("audio").play().catch(() => {
+        status("Tocá la pantalla para activar audio");
+      });
+    };
+
+    stream.getTracks().forEach(track => {
+      pc.addTrack(track, stream);
+    });
+
+    dc = pc.createDataChannel("oai-events");
+
+    dc.onopen = () => {
+      clearTimeout(timer);
+      status("JOCA te escucha");
+      $("orb").classList.add("active");
+
+      dc.send(JSON.stringify({
+        type: "response.create",
+        response: {
+          instructions:
+            "Saludá brevemente en español uruguayo. " +
+            "Decí: Hola, soy JOCA. ¿En qué te ayudo?"
+        }
+      }));
+    };
+
+    dc.onmessage = event => {
+      const msg = JSON.parse(event.data);
+
+      if (msg.type === "input_audio_buffer.speech_started") {
+        status("Escuchando...");
+      }
+
+      if (msg.type === "response.created") {
+        status("JOCA está respondiendo...");
+      }
+
+      if (msg.type === "response.done") {
+        status("JOCA te escucha");
+      }
+
+      if (msg.type === "error") {
+        status(msg.error?.message || "Error de voz");
+      }
+    };
+
+    pc.onconnectionstatechange = () => {
+      if (pc && ["failed", "closed"].includes(
+        pc.connectionState
+      )) {
+        disconnect();
+        status("Conexión finalizada");
+      }
+    };
+
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
+
+    const answer = await fetch(
+      "https://api.openai.com/v1/realtime/calls",
+      {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer " + data.value,
+          "Content-Type": "application/sdp"
+        },
+        body: offer.sdp,
+        signal: controller.signal
+      }
+    );
+
+    if (!answer.ok) {
+      throw new Error("Error WebRTC: " + answer.status);
+    }
+
+    const sdp = await answer.text();
+
+    if (run !== generation) return;
+
+    await pc.setRemoteDescription({
+      type: "answer",
+      sdp
+    });
+
+  } catch (error) {
+    if (run !== generation) return;
+    disconnect();
+    status(error.message || "Error de conexión");
+  }
+}
+
+window.addEventListener("pagehide", disconnect);
+
+document.addEventListener("click", () => {
+  if ($("audio").srcObject) {
+    $("audio").play().catch(() => {});
+  }
+});
+</script>
+</body>
+</html>
